@@ -1,40 +1,27 @@
 version: '3.0'
 services:
-  prometheus:
-    build: ./prometheus
-    ports:
-      - 9090:9090
-    links:
-      - random1
-      - random2
-      - random3
-      - fire
-
   fire:
-    build: ./api
+    image: local/fire
+    build: ./fire
     ports:
       - 5000:80
 
   igniter:
-    build: ./spammer
+    image: local/igniter
+    build: ./igniter
     links:
       - fire
 
-  random1:
-    build: ./random-latencies
-    environment:
-      PORT: 8080
+  prometheus:
+    image: local/prometheus
+    build: ./prometheus
     ports:
-      - 8080:8080
-  random2:
-    build: ./random-latencies
-    environment:
-      PORT: 8081
-    ports:
-      - 8081:8081
-  random3:
-    build: ./random-latencies
-    environment:
-      PORT: 8082
-    ports:
-      - 8082:8082
+      - 9090:9090
+    links:
+      - fire
+    volumes:
+      - prometheus_data:/data
+    command: -storage.local.path=/data
+
+volumes:
+  prometheus_data:

@@ -17,6 +17,11 @@ namespace Fire
         {
             services.AddSingleton(new System.Random());
             services.AddMvc();
+
+            CollectorRegistry.Instance.RegisterOnDemandCollectors(new IOnDemandCollector[]{
+                new DotNetStatsCollector(),
+                new WindowsDotNetStatsCollector()
+            });
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
@@ -28,6 +33,7 @@ namespace Fire
 
             app
                 .UsePrometheusServer()
+                .UsePrometheusMiddleware()
                 .UseMvc();
         }
     }

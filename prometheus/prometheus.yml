@@ -20,16 +20,3 @@ scrape_configs:
       - targets: ['fire:80']
         labels:
           group: production
-
-  - job_name: example-random
-
-    scrape_interval: 5s
-
-    static_configs:
-      - targets: ['random1:8080', 'random2:8081']
-        labels:
-          group: production
-        
-      - targets: ['random3:8082']
-        labels:
-          group: canary

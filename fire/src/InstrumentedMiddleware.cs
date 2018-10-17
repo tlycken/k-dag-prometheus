@@ -1,5 +1,7 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Prometheus.Client;
 
@@ -7,15 +9,16 @@ namespace Fire
 {
     public class PrometheusMiddleware
     {
-        private readonly Func<HttpContext, Task> _next;
+        private readonly RequestDelegate _next;
         private readonly Counter _counter;
-        private readonly Histogram _histogram;
+        private readonly Summary _requestDuration;
 
-        public PrometheusMiddleware(Func<HttpContext, Task> next)
+        public PrometheusMiddleware(RequestDelegate next)
         {
             _next = next;
             _counter = Metrics.CreateCounter("http_requests_total", "Total HTTP requests to the Fire API", new[] { "path", "method" });
-            _histogram = Metrics.CreateHistogram("http_request_duration_microseconds", "");
+            _requestDuration = Metrics.CreateSummary("http_request_duration_microseconds", "", new[]{"path", "method"});
+            Console.WriteLine("Instantiated metrics");
         }
 
         public async Task Invoke(HttpContext context)
@@ -28,7 +31,12 @@ namespace Fire
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             await _next?.Invoke(context);
             var elapsed = stopwatch.Elapsed.TotalMilliseconds * 1000;
-            _histogram.Observe(elapsed);
+            _requestDuration.Labels(path, method).Observe(elapsed);
         }
+    }
+
+    public static class PrometheusMiddlewareExtensions
+    {
+        public static IApplicationBuilder UsePrometheusMiddleware(this IApplicationBuilder app) => app.UseMiddleware<PrometheusMiddleware>();
     }
 }
